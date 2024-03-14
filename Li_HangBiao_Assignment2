@@ -1,0 +1,273 @@
+##############################################################################
+# Program name: MIPS Two-Dimensional Array Assignment
+# Programmer: Li Hang Biao
+# Submission Date: 11/29/2022
+##############################################################################
+# Overall Program Functional Description:
+# Asking user to choose a row and column to input values to array of 1 for X or 0 for O to print out a tic tac toe kind of alike board.
+##############################################################################
+# Register Usage in Main:
+# $t0 use for row
+# $t1 use for column
+# $t2 use for limit check which store 2
+# $t3 use for the answer for formula (B + W  * (M*I+J))
+# $t4 use for store M*I and then MI + J
+# $t5 use to store negative 1 and to check if the user inputted a negative one
+# $t6 a storage of just number 3
+# $t7 a storage of just number 4
+# $t8 store 1
+# $t9 store 0
+# $a1 use to store the value in array of A($t3) to be able to compare using beq
+##############################################################################
+
+.data
+	A: .space 12 #4 word size x 3 row x 3 column array
+	promt: .asciiz "Enter your input for both row and column. The system will only take -1, 0, 1, and 2 as an input. If the row is -1 and column is -1 then system will be terminate and show your result \n"
+	inputRow: .asciiz "\n Your integer for row: "
+	unrecognizeText: .asciiz "Your input is invalid. Please try again. \n"
+	inputColumn: .asciiz  "\n Your your integer for column: "
+	inputValue: .asciiz "\n Your input for your selected row and column: "
+	nextInput: .asciiz "\n Your next input: "
+	terminate: .asciiz "\n You had enter -1 for both row and column, now the program will terminate and print out your result."
+	oPrint: .asciiz  " O "
+	xPrint: .asciiz " X "
+	barPrint: .asciiz "|"
+	basePrint: .asciiz "-----------"
+	spacePrint: .asciiz "   "
+	nextSpace: .asciiz "\n"
+	invalidMessage: .asciiz "\n Your inputed is invalid try again"
+.text
+
+main: 
+	#intro promt statement
+	li $v0, 4
+	la $a0, promt
+	syscall 
+	
+	li $t2, 2 #2 is the max limit for the loop to go
+	li $t0, 0 #set row = 0
+	li $t1, 0 #set column = 0
+	li $t5, -1 #set it to negative number
+	li $t3, 0 #base info to set the equation answer to zero first
+	li $t4, 0 #storage for part equation for $t3
+	li $t6, 3 #a storage of number 3
+	li $t7, 4 #a storage for number 4
+	li $t8, 1 #store 1 for comparasion
+	li $t9, 0 #store 0 for comparasion
+	
+	negativeLoopRow: #first loop for row
+	bgt $t0, $t2, endLoopOne #exit loop once row number is bigger than 2
+	 
+	 	li $t1, 0 #set column back to 0 to reset
+		negativeLoopColoumn: #second loop for coloumn 
+		bgt $t1, $t2, columnEnd
+			mul $t4, $t6, $t0 #Math equation to change $t4, space. M*I
+			add $t4, $t4, $t1 #MI + J =  A
+			mul $t3, $t4, $t7 # W * A
+			sw $t5, A($t3) #making all the space into a -1
+			
+			
+		addi $t1, $t1, 1
+		j negativeLoopColoumn #end of loop, jump back
+		
+		columnEnd: 
+		
+	addi $t0, $t0, 1
+	j negativeLoopRow #end of loop, jump back
+	
+	endLoopOne: #end of the negative one loop
+	
+	
+	playerLoop: #This function will promt user which row and column to change the value of the space in the array. 
+
+	
+		li $v0, 4
+		la $a0, inputRow #promt for row
+		syscall 
+	
+		li $v0, 5
+		syscall 
+		
+		#store row input to $t0
+		move $t0, $v0
+		
+		li $v0, 4
+		la $a0, inputColumn #promt for column
+		syscall 
+	
+		li $v0, 5
+		syscall 
+		
+		#store column input to $t0
+		move $t1, $v0
+		
+		j checkUserInputs #once the user finished inputting will jump to check user inputs
+		checkedSafe: #once both code isnt negative one then the program will jump back. 
+	
+	j playerLoop # first back to the player promt loop
+
+	checkUserInputs: 
+	beq $t0, $t5, terminCheck #if the row is -1
+	beq $t0 $t2, nextNextCheck # if the row is 2
+	beq $t0 $t8, nextNextCheck # if the row is 1
+	beq $t0 $t9, nextNextCheck # if the row is 0
+	
+
+	li $v0, 4
+	la $a0, unrecognizeText #promt if the input can't be recognized
+	syscall 
+	
+	j playerLoop #back loop if the row input can't be recognized
+	
+	nextNextCheck: 
+	beq $t1 $t2, inputedValue # if the column is 2
+	beq $t1 $t8, inputedValue # if the column is 1
+	beq $t1 $t9, inputedValue # if the column is 0
+	
+	
+  	li $v0, 4
+	la $a0, unrecognizeText #promt if the input can't be recognized
+	syscall 
+	
+	j playerLoop #back loop if the column input can't be recognized
+
+	
+	terminCheck:
+	beq $t1, $t5, terminatePrint #if both input is -1 then the program will be terminated and the system will print the board. 
+	
+	#If not -1 than the program will went back to 
+	li $v0, 4
+	la $a0, unrecognizeText #promt if the input can't be recognized
+	syscall 
+	bne $t1, $t5, playerLoop #input can't be recognized, move player back to step one
+	
+	j playerLoop #A final back loop if nothing else can be recognized.  
+	
+	# make 4 loops, one for each check for full secure
+	
+	
+	 inputedValue: # use to store user input to their selected row and column
+
+		li $v0, 4
+		la $a0, inputValue #ask user to input a value
+		syscall 
+	
+		li $v0, 5 #user will input their value
+		syscall
+		
+		beq $v0, $t8 finishedCheck #if the value is equal to one
+		beq $v0, $t9 finishedCheck #if the value is equal to zero
+		
+		#invalid message print
+		
+		li $v0, 4
+		la $a0, invalidMessage
+		syscall 
+		
+		j playerLoop #else back to the loop
+	
+		finishedCheck: #if it equal to the previous two statement
+		
+		mul $t4, $t6, $t0 #Math equation to change $t4, space. M*I
+		add $t4, $t4, $t1 #MI + J =  A
+		mul $t3, $t4, $t7 # W * A
+		sw $v0, A($t3) #store the value user want into the array
+	
+	 j checkedSafe #back to the user input loop
+	 
+	 
+	#final step
+	terminatePrint: # printout the result
+	 	li $v0, 4
+	 	la $a0, terminate
+	 	syscall 
+	 	
+		#set next row first with a \n space
+		li $v0, 4
+		la $a0, nextSpace
+		syscall 
+	
+	
+	li $t0, 0 #set $t1 back to 0
+	LoopRow: #first loop for row
+		bgt $t0, $t2, endRow #exit loop once row number is bigger than 2
+	
+		bnez $t0, printBase 
+		backFromBasePrinting: #loop to come back from the print
+		#set next row first with a \n space
+		li $v0, 4
+		la $a0, nextSpace
+		syscall 
+	
+	 	li $t1, 0 #set column back to 0 to reset
+		LoopColoumn: #second loop for coloumn 
+		bgt $t1, $t2, loopColumnEnd
+			mul $t4, $t6, $t0 #Math equation to change $t4, space. M*I
+			add $t4, $t4, $t1 #MI + J =  A
+			mul $t3, $t4, $t7 # W * A
+			
+			lw $a1, A($t3)
+			
+			beq $a1, $t5, printSpace #print out a space bar " " if the value is -1
+			beq $a1, $t8, printX #print out a "X" if the value is 1
+			beq $a1, $t9, printO #print out a "O" if the value is 0
+			
+			backFromPrint: #back here
+			bne $t1, $t2, printBar
+			backFromMorePrint: #back here after the bar print
+		
+		addi $t1, $t1, 1
+		j LoopColoumn #end of loop, jump back
+		
+		loopColumnEnd: 
+		
+		#set next row first with a \n space
+		li $v0, 4
+		la $a0, nextSpace
+		syscall 
+		
+	addi $t0, $t0, 1
+	j LoopRow #end of loop, jump back
+	
+	endOne: #end of the negative one loop
+	
+	#Print space
+	printSpace: 
+	li $v0, 4
+	la $a0, spacePrint
+	syscall 
+	
+	j backFromPrint 
+	
+	#Print X
+	printX:
+	li $v0, 4
+	la $a0, xPrint 
+	syscall 
+	
+	j backFromPrint
+	
+	#Print O
+	printO:
+	li $v0, 4
+	la $a0, oPrint
+	syscall 
+	
+	j backFromPrint
+
+	#print |
+	printBar: 
+	li $v0, 4
+	la $a0, barPrint
+	syscall
+
+	j backFromMorePrint
+	
+	#print -----------
+	printBase:
+	li $v0, 4
+	la $a0, basePrint
+	syscall
+	j backFromBasePrinting
+	
+	endRow: #end of program
